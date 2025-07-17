@@ -1,0 +1,3 @@
+[submodule "external/CrossNews"]
+	path = external/CrossNews
+	url = https://github.com/mamarcus64/CrossNews
