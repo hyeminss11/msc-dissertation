@@ -210,3 +210,5 @@ __marimo__/
 Preprocessing/
 !Preprocessing/*.ipynb
 !Preprocessing/*.py
+
+.DS_Store
