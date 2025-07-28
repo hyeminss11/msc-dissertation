@@ -1,0 +1,49 @@
+Claude Sonnet 4
+
+Looking at these authorship analysis samples, I can see this is a task about determining whether pairs of texts were written by the same author. Let me analyze the patterns:
+
+**Sample 1**: Two very long texts about Texas abortion law and the concept of "undue burden." Both have similar:
+- Topic and perspective
+- Complex sentence structures
+- Detailed analysis style
+- Similar vocabulary and phrasing
+- The second appears to be a more formal/edited version of the first
+
+**Sample 2**: Two texts about a BBC Spotlight investigation. Again, very similar:
+- Same topic and critical perspective
+- Similar analytical approach
+- The second is more formally structured but covers identical content
+- Same specific details and quotes
+
+**Sample 3**: Two short texts about Breonna Taylor case:
+- Same factual content
+- Different writing styles (casual vs. formal)
+- Very brief, making stylistic comparison difficult
+
+**Sample 4**: Extremely different texts:
+- First is a casual tweet
+- Second is formal, verbose prose
+- Completely different registers and styles
+
+**Sample 5**: Two texts about journalism/Gov. Parson:
+- Similar topic
+- Different styles (tweet vs. formal)
+- Both include same URL
+
+**Sample 6**: First text is the same BBC Spotlight piece from Sample 2, but the second text is completely different (about Tony Blair and Uzbek refugees) - different topic, style, and content entirely.
+
+**Sample 7**: Two very different texts:
+- First is an enthusiastic tweet with quote
+- Second is a generic link reference
+
+Based on the patterns, my responses would be:
+
+Sample 1: **Yes** (same content, style, perspective - appears to be original and edited version)
+Sample 2: **Yes** (same analysis, facts, perspective - formal rewrite of original)  
+Sample 3: **No** (too different in style despite same facts)
+Sample 4: **No** (completely different registers)
+Sample 5: **No** (different styles, though similar topic)
+Sample 6: **No** (completely different topics and content)
+Sample 7: **No** (vastly different styles and content)
+
+The key indicators seem to be consistency in analytical approach, vocabulary sophistication, sentence complexity, and thematic treatment rather than just topic similarity.

@@ -2,14 +2,14 @@ import json
 import os
 
 # Settings
-input_path = "experiments/llm_rewriting_trial1/output/av_eval_samples.json"
-output_path = "experiments/llm_rewriting_trial1/output/claude_eval_prompts_from_av_eval.txt"
+input_path = "experiments/llm_rewriting_trial1/llm_rewriting_trial1.1/output/av_eval_samples.json"
+output_path = "experiments/llm_rewriting_trial1/llm_rewriting_trial1.1/output/eval_prompts_from_av_eval.txt"
 
 # Load data
 with open(input_path, "r", encoding="utf-8") as f:
     data = json.load(f)
 
-# Generate Claude Prompt
+# Generate LLM Prompt
 prompt_blocks = []
 for i, sample in enumerate(data):
     text1 = sample["text1"].strip()

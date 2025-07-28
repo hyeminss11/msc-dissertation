@@ -2,10 +2,10 @@ import json
 import random
 
 # Load rewritten article/tweet data
-with open("experiments/llm_rewriting_trial1/output/articles_rewritten_manual.json", encoding="utf-8") as f:
+with open("experiments/llm_rewriting_trial1/llm_rewriting_trial1.1/output/articles_rewritten_manual.json", encoding="utf-8") as f:
     articles = json.load(f)
 
-with open("experiments/llm_rewriting_trial1/output/tweets_rewritten_manual.json", encoding="utf-8") as f:
+with open("experiments/llm_rewriting_trial1/llm_rewriting_trial1.1/output/tweets_rewritten_manual.json", encoding="utf-8") as f:
     tweets = json.load(f)
 
 samples = []
@@ -41,7 +41,7 @@ samples.append({
 })
 
 # Save
-with open("experiments/llm_rewriting_trial1/output/av_eval_samples.json", "w", encoding="utf-8") as f:
+with open("experiments/llm_rewriting_trial1/llm_rewriting_trial1.1/output/av_eval_samples.json", "w", encoding="utf-8") as f:
     json.dump(samples, f, indent=2, ensure_ascii=False)
 
 print("Saved av_eval_samples.json with", len(samples), "entries.")
