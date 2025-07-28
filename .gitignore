@@ -212,3 +212,7 @@ Preprocessing/
 !Preprocessing/*.py
 
 .DS_Store
+
+# Large raw data files
+combined_data.json
+crossnews_silver.json

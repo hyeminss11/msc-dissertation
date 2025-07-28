@@ -1,0 +1,3 @@
+Rephrase the following text in a slightly different way, keeping the original meaning and tone, just revising some grammar or punctuation errors:
+
+"{text}"

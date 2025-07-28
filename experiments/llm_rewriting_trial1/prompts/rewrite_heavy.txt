@@ -1,0 +1,3 @@
+Heavily rewrite the following text in a completely different style. Preserve the meaning, but make it look like it was written by a different person:
+
+"{text}"
