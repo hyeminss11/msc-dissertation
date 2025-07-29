@@ -2,8 +2,8 @@ import json
 import os
 
 # Settings
-input_path = "experiments/llm_rewriting_trial1/llm_rewriting_trial1.1/output/av_eval_samples.json"
-output_path = "experiments/llm_rewriting_trial1/llm_rewriting_trial1.1/output/eval_prompts_from_av_eval.txt"
+input_path = "experiments/llm_rewriting_trial1/llm_rewriting_trial1.2/output/av_eval_samples_cross_author_type.json"
+output_path = "experiments/llm_rewriting_trial1/llm_rewriting_trial1.2/output/eval_prompts_from_av_eval.txt"
 
 # Load data
 with open(input_path, "r", encoding="utf-8") as f:
