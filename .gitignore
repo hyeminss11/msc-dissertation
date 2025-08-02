@@ -219,10 +219,12 @@ crossnews_silver.json
 experiments/first_trial_roberta/merged_tweets.json
 experiments/first_trial_roberta/combined_data_sample.json
 
-# results
+# data
 *.json
 **/*.json
 *.txt
 **/*.txt
 *.csv
 **/*.csv
+*.vtt
+**/*.vtt
