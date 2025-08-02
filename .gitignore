@@ -220,4 +220,9 @@ experiments/first_trial_roberta/merged_tweets.json
 experiments/first_trial_roberta/combined_data_sample.json
 
 # results
-.txt
+*.json
+**/*.json
+*.txt
+**/*.txt
+*.csv
+**/*.csv
