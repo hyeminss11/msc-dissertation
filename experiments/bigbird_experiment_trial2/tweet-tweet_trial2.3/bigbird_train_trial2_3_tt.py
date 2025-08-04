@@ -14,9 +14,13 @@ tokenizer = AutoTokenizer.from_pretrained("google/bigbird-roberta-base")
 
 # 1. Custom dataset
 class AVPairDataset(Dataset):
-    def __init__(self, json_path, tokenizer, max_length=4096):
+    def __init__(self, json_path, tokenizer, max_length=4096, sample_size=None):
         with open(json_path, "r", encoding="utf-8") as f:
             self.data = json.load(f)
+        
+        if sample_size is not None:
+            self.data = self.data[:sample_size]
+        
         self.tokenizer = tokenizer
         self.max_length = max_length
 
@@ -38,6 +42,7 @@ class AVPairDataset(Dataset):
             "attention_mask": encoded["attention_mask"].squeeze(0),
             "labels": int(item["label"])
         }
+    
 
 # 2. metrics function
 def compute_metrics(eval_pred):
@@ -53,24 +58,27 @@ def compute_metrics(eval_pred):
     }
 
 # 3. Load Data
-train_dataset = AVPairDataset("msc-dissertation/experiments/data/train.json", tokenizer = tokenizer)
-val_dataset = AVPairDataset("msc-dissertation/experiments/data/val.json", tokenizer = tokenizer)
+train_dataset = AVPairDataset("msc-dissertation/experiments/data/tweet-tweet/train.json", tokenizer = tokenizer, sample_size = 2000)
+val_dataset = AVPairDataset("msc-dissertation/experiments/data/tweet-tweet/val.json", tokenizer = tokenizer, sample_size = 500)
 
 # 4. Load model
 model = AutoModelForSequenceClassification.from_pretrained("google/bigbird-roberta-base", num_labels=2)
+experiment_name = "tweet_tweet_trial1"
+base_output_dir = f"./models/bigbird/{experiment_name}"
+best_model_dir = f"{base_output_dir}/best_model"
 
 # 5. Training setup
 training_args = TrainingArguments(
-    output_dir="./models/bigbird",
+    output_dir=base_output_dir,
     eval_strategy="epoch",
     save_strategy="epoch",
-    num_train_epochs=5,
+    num_train_epochs=3,
     per_device_train_batch_size=2,
     per_device_eval_batch_size=2,
     learning_rate=2e-5,
-    warmup_steps=500,
+    warmup_steps=100,
     weight_decay=0.01,
-    logging_steps=100,
+    logging_steps=500,
     save_total_limit=2,
     load_best_model_at_end=True,
     metric_for_best_model="eval_loss",
@@ -92,8 +100,8 @@ trainer = Trainer(
 trainer.train()
 
 # 8. Save the model and tokeniser
-trainer.save_model("./models/bigbird/best_model")
-train_dataset.tokenizer.save_pretrained("./models/bigbird/best_model")
+trainer.save_model(best_model_dir)
+train_dataset.tokenizer.save_pretrained(best_model_dir)
 
 # 9. Evaluate with eval dataset
 results = trainer.evaluate(eval_dataset=val_dataset)
@@ -102,6 +110,6 @@ for k, v in results.items():
     print(f"{k}: {v:.4f}" if isinstance(v, float) else f"{k}: {v}")
 
 # 10. Save result
-with open("./models/bigbird/best_model/eval_results.json", "w", encoding="utf-8") as f:
+with open(f"{best_model_dir}/eval_results.json", "w", encoding="utf-8") as f:
     json.dump(results, f, indent=2, ensure_ascii=False)
 trainer.save_state()
