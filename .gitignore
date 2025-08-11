@@ -207,7 +207,7 @@ marimo/_lsp/
 __marimo__/
 
 # Data
-Preprocessing/original-reproduction
+preprocessing/original-reproduction
 
 .DS_Store
 
@@ -220,6 +220,8 @@ experiments/first_trial_roberta/combined_data_sample.json
 # data
 *.json
 **/*.json
+*.jsonl
+**/*.jsonl
 *.txt
 **/*.txt
 *.csv
