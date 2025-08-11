@@ -1,137 +1,180 @@
-import json
-import copy
-import uuid
+# text_processing.py
 import re
+import random
 from collections import defaultdict
 
-def filter_authors_with_enough_docs(docs, min_docs_per_genre=2):
+# ---------- anonymization ----------
+def anonymise_text_per_doc(text: str) -> str:
     """
-    Keeps only authors who have at least `min_docs_per_genre` in each genre.
+    Anonymise @mentions and URLs with per-doc stable random tags.
+    e.g. @jack -> @USER_4821 (same @jack in the same doc -> same number)
+         https://... -> <URL_1003> (same URL in the same doc -> same number)
     """
-    author_genre_counts = defaultdict(lambda: defaultdict(int))
-    for doc in docs:
-        author_genre_counts[doc["author"]][doc["genre"]] += 1
+    mention_map = {}
+    url_map = {}
 
-    eligible_authors = {
-        author for author, genre_counts in author_genre_counts.items()
-        if all(genre_counts.get(genre, 0) >= min_docs_per_genre for genre in ["Article", "Tweet"])
-    }
+    def repl_mention(m):
+        mention = m.group(0)
+        if mention not in mention_map:
+            mention_map[mention] = random.randint(1, 9999)
+        return f"@USER_{mention_map[mention]}"
 
-    filtered_docs = [doc for doc in docs if doc["author"] in eligible_authors]
-    return filtered_docs
+    def repl_url(m):
+        url = m.group(0)
+        if url not in url_map:
+            url_map[url] = random.randint(1, 9999)
+        return f"<URL_{url_map[url]}>"
 
-# There are tweets with @userid mention. They will be treatd anonymously.
-# Also, since links can confuse the model, they are going to be treated as <URL> equally.
-def anonymize_text(text):
-    """
-    Replaces @mentions with @USER and any URL with <URL>.
-    """
-    text = re.sub(r'@\w+', '@USER', text)  # Anonymize @username
-    text = re.sub(r'https?://\S+|www\.\S+', '<URL>', text)  # Anonymize links
+    text = re.sub(r'@\w+', repl_mention, text)
+    text = re.sub(r'https?://\S+|www\.\S+', repl_url, text)
+    text = re.sub(r'\s+', ' ', text).strip()
     return text
 
-# Function to process documents with word count.
-def process_documents_by_word_count(docs, min_word_threshold=100, max_word_limit=3000):
+# ---------- small text utils ----------
+def merge_texts_naturally(texts):
+    """Merge texts without visible join tokens (just normalize spaces)."""
+    cleaned = []
+    for t in texts:
+        t = (t or "").strip()
+        t = re.sub(r'\s+', ' ', t)
+        if t:
+            cleaned.append(t)
+    return ' '.join(cleaned)
+
+def split_by_words(text, max_words):
+    """Split text by word count (no word cutting)."""
+    words = text.split()
+    return [' '.join(words[i:i+max_words]) for i in range(0, len(words), max_words)]
+
+# ---------- main pipeline ----------
+def process_documents_by_word_count(
+    docs,
+    min_word_threshold: int = 100,
+    max_word_limit: int = 3000,
+    slack_ratio: float = 0.20,   # allow up to +10% beyond the min threshold when merging
+):
     """
-    Short documents are merged by author and genre until min_word_threshold is met.
-    Long documents are split into multiple documents by max_word_limit.
-    All operations are done on word-count basis.
-    Each processed doc gets a new unique ID, and original ID(s) are stored in source_id.
+    - Group by (author, genre).
+    - For docs with >= min_word_threshold: keep as-is (but split if > max_word_limit).
+    - For docs with <  min_word_threshold: greedily merge short docs from the same (author, genre)
+      until reaching at least min_word_threshold, then *optionally* keep adding more short docs
+      as long as total words <= min_word_threshold * (1 + slack_ratio).
+      This avoids wasting tiny leftover snippets and prevents 1-word outputs.
+    - Every output gets a new sequential id; original ids are recorded in `source_id`.
+    - Mentions/URLs are anonymized per-doc before any length logic.
     """
-    grouped = {}
-    for doc in docs:
-        key = (doc["author"], doc["genre"])
-        grouped.setdefault(key, []).append(doc)
-    
+    grouped = defaultdict(list)
+    for d in docs:
+        grouped[(d["author"], d["genre"])].append(d)
+
     processed_docs = []
-    global_id_counter = 0  # to assign new unique numeric IDs
+    next_id = 0
 
-    for (author, genre), doc_list in grouped.items():
-        doc_list = sorted(doc_list, key=lambda d: len(d["text"].split()))
-        
-        buffer_words = []
-        buffer_ids = []
-        
-        for doc in doc_list:
-            doc["text"] = anonymize_text(doc["text"])
-            words = doc["text"].split()
-            
-            if len(words) < min_word_threshold:
-                buffer_words.extend(words)
-                buffer_ids.append(doc["id"])
-                
-                if len(buffer_words) >= min_word_threshold:
-                    new_text = " ".join(buffer_words)
-                    merged_doc = {
-                        "text": new_text,
-                        "author": author,
-                        "genre": genre,
-                        "source_id": "+".join(buffer_ids)
-                    }
-                    if len(new_text.split()) > max_word_limit:
-                        processed_docs.extend(
-                            split_long_doc(merged_doc, max_word_limit, global_id_counter)
-                        )
-                        global_id_counter += len(processed_docs) - global_id_counter
-                    else:
-                        merged_doc["id"] = str(global_id_counter)
-                        global_id_counter += 1
-                        processed_docs.append(merged_doc)
-                    buffer_words = []
-                    buffer_ids = []
-            else:
-                new_doc = {
-                    "text": doc["text"],
-                    "author": author,
-                    "genre": genre,
-                    "source_id": doc["id"]
-                }
-                if len(words) > max_word_limit:
-                    processed_docs.extend(
-                        split_long_doc(new_doc, max_word_limit, global_id_counter)
-                    )
-                    global_id_counter += len(processed_docs) - global_id_counter
-                else:
-                    new_doc["id"] = str(global_id_counter)
-                    global_id_counter += 1
-                    processed_docs.append(new_doc)
-
-        if len(buffer_words) >= min_word_threshold:
-            new_text = " ".join(buffer_words)
-            merged_doc = {
-                "text": new_text,
+    # helper to emit a merged chunk (split if needed)
+    def emit_doc(author, genre, text, src_ids_joined):
+        nonlocal next_id, processed_docs
+        if not text:
+            return
+        words = text.split()
+        if len(words) > max_word_limit:
+            chunks = split_by_words(text, max_word_limit)
+        else:
+            chunks = [text]
+        for ch in chunks:
+            processed_docs.append({
+                "id": str(next_id),
+                "text": ch,
                 "author": author,
                 "genre": genre,
-                "source_id": "+".join(buffer_ids)
-            }
-            if len(new_text.split()) > max_word_limit:
-                processed_docs.extend(
-                    split_long_doc(merged_doc, max_word_limit, global_id_counter)
-                )
-                global_id_counter += len(processed_docs) - global_id_counter
-            else:
-                merged_doc["id"] = str(global_id_counter)
-                global_id_counter += 1
-                processed_docs.append(merged_doc)
+                "source_id": src_ids_joined if src_ids_joined else str(next_id),
+            })
+            next_id += 1
+
+    max_merge_limit = int(min_word_threshold * (1.0 + slack_ratio))
+
+    for (author, genre), doc_list in grouped.items():
+        # Sort ascending by length so we consume small pieces first
+        doc_list = sorted(
+            doc_list,
+            key=lambda d: len((d.get("text") or "").split())
+        )
+
+        i = 0
+        buffer_texts = []
+        buffer_src_ids = []
+
+        while i < len(doc_list):
+            raw = (doc_list[i].get("text") or "").strip()
+            if not raw:
+                i += 1
+                continue
+
+            # anonymize current doc before counting/merging
+            cur_text = anonymise_text_per_doc(raw)
+            cur_words = cur_text.split()
+            cur_len = len(cur_words)
+
+            if cur_len >= min_word_threshold:
+                # Large enough by itself: flush any pending buffer first if valid, then emit this one
+                if buffer_texts:
+                    merged_len = sum(len(t.split()) for t in buffer_texts)
+                    if merged_len >= min_word_threshold:
+                        merged = merge_texts_naturally(buffer_texts)
+                        emit_doc(author, genre, merged, "+".join(buffer_src_ids))
+                    # reset buffer regardless (we don't carry undersized buffer forward)
+                    buffer_texts, buffer_src_ids = [], []
+
+                # Emit the standalone (split if needed)
+                emit_doc(author, genre, cur_text, doc_list[i].get("id", "unknown"))
+                i += 1
+                continue
+
+            # cur_len < min_word_threshold -> accumulate in buffer
+            buffer_texts.append(cur_text)
+            buffer_src_ids.append(doc_list[i].get("id", "unknown"))
+            merged_len = sum(len(t.split()) for t in buffer_texts)
+
+            if merged_len < min_word_threshold:
+                # Not enough yet — move to next small doc
+                i += 1
+                continue
+
+            # Reached the minimum: try to greedily add more *short* docs up to max_merge_limit
+            j = i + 1
+            while j < len(doc_list):
+                nxt_raw = (doc_list[j].get("text") or "").strip()
+                if not nxt_raw:
+                    j += 1
+                    continue
+                nxt_text = anonymise_text_per_doc(nxt_raw)
+                nxt_len = len(nxt_text.split())
+
+                # Don't mix in a "long" doc; stop greedily adding here
+                if nxt_len >= min_word_threshold:
+                    break
+
+                if merged_len + nxt_len <= max_merge_limit:
+                    buffer_texts.append(nxt_text)
+                    buffer_src_ids.append(doc_list[j].get("id", "unknown"))
+                    merged_len += nxt_len
+                    j += 1
+                else:
+                    break
+
+            # Flush the merged short-doc bundle
+            merged = merge_texts_naturally(buffer_texts)
+            emit_doc(author, genre, merged, "+".join(buffer_src_ids))
+
+            # Reset buffer and continue from j (we already consumed up to j-1)
+            buffer_texts, buffer_src_ids = [], []
+            i = j
+
+        # End-of-group: if buffer still holds enough, flush; else drop it
+        if buffer_texts:
+            merged_len = sum(len(t.split()) for t in buffer_texts)
+            if merged_len >= min_word_threshold:
+                merged = merge_texts_naturally(buffer_texts)
+                emit_doc(author, genre, merged, "+".join(buffer_src_ids))
+            # else: discard undersized tail
 
     return processed_docs
-
-def split_long_doc(doc, max_word_limit, starting_id):
-    """
-    Splits a document into multiple docs by word count (no word cutting).
-    Assigns new sequential numeric IDs starting from `starting_id`.
-    Preserves the original document's ID in `source_id`.
-    """
-    words = doc["text"].split()
-    chunks = [words[i:i + max_word_limit] for i in range(0, len(words), max_word_limit)]
-    
-    new_docs = []
-    for i, chunk in enumerate(chunks):
-        new_docs.append({
-            "id": str(starting_id + i),
-            "text": " ".join(chunk),
-            "author": doc["author"],
-            "genre": doc["genre"],
-            "source_id": doc.get("source_id", doc.get("id", "unknown"))
-        })
-    return new_docs
