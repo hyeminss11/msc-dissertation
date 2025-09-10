@@ -3,7 +3,7 @@ import json
 from pathlib import Path
 from transformers import AutoTokenizer
 
-FILE = Path("processed_data_new/crossnews_gold_processed.json")
+FILE = Path("processed_data_new/crossnews_silver_processed.json")
 
 tokenizer = AutoTokenizer.from_pretrained("distilbert-base-uncased")
 
