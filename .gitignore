@@ -228,3 +228,8 @@ experiments/first_trial_roberta/combined_data_sample.json
 **/*.csv
 *.vtt
 **/*.vtt
+
+codes.zip
+
+# shap
+shap/
