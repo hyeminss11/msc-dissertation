@@ -1,3 +1,0 @@
-Rephrase the following text with moderate changes in tone, word choice, or sentence structure, while keeping the original intent:
-
-"{text}"
