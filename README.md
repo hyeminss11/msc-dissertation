@@ -1,6 +1,8 @@
 # msc-dissertation
-Dissertation Project
+Evaluating Authorship Verification Robustness Under Domain Shift and LLM-Based Rewriting
 
+This repository contains the code and experimental setup for my MSc dissertation at the University of Sheffield.
+The project investigates authorship verification (AV) under domain shift (e.g., news vs. tweets) and adversarial rewriting using large language models (LLMs).
 
 ## 📁 External Dataset: CrossNews
 
@@ -12,3 +14,7 @@ This project uses the [CrossNews](https://github.com/mamarcus64/CrossNews) datas
 > **Citation**:  
 > M. Ma, “CROSSNEWS: A Cross-Genre Authorship Verification and Attribution Benchmark”, AAAI, vol. 39, no. 23, pp. 24777-24785, Apr. 2025. 
 > GitHub: [https://github.com/mamarcus64/CrossNews](https://github.com/mamarcus64/CrossNews)
+
+## Ethics Review
+This project has been ethically reviewed and approved by the Ethics Committee of the University of Sheffield.
+
