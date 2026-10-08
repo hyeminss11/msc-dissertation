@@ -17,7 +17,7 @@ This repository contains the code and experimental framework for my MSc disserta
 
 ## External Dataset: CrossNews
 
-This project uses the [CrossNews](https://github.com/mamarcus64/CrossNews) dataset as a Git submodule for experiments related to authorship verification and threat text analysis.
+This project uses the [CrossNews](https://github.com/mamarcus64/CrossNews) dataset as a Git submodule for the authorship verification experiments.
 
 - Repository: [mamarcus64/CrossNews](https://github.com/mamarcus64/CrossNews) (included as a submodule at `external/CrossNews`)
 - Description: A cross-genre authorship verification and attribution benchmark (news articles and tweets).
